@@ -1,0 +1,12 @@
+name: Test My PC
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: self-hosted
+
+    steps:
+      - name: Test Docker
+        run: docker ps
