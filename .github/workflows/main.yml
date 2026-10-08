@@ -1,5 +1,5 @@
-name: Build and Push Backend Image
-##
+name: Build and Deploy Backend
+
 on:
   push:
     branches:
@@ -9,9 +9,15 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/mahmoudshabaan22/backend-vps:latest
 
 jobs:
+
+  # ==========================================
+  # 1. Build Docker Image and Push to GHCR
+  # ==========================================
   build-and-push:
+    name: Build & Push Backend Image
     runs-on: ubuntu-latest
 
     permissions:
@@ -30,17 +36,56 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Convert image name to lowercase
-        run: |
-          echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
-
       - name: Build Docker image
         run: |
           docker build \
-            -t $REGISTRY/$IMAGE_NAME:latest \
+            -t $IMAGE_NAME \
             .
 
       - name: Push Docker image
         run: |
-          docker push \
-            $REGISTRY/$IMAGE_NAME:latest
+          docker push $IMAGE_NAME
+
+
+  # ==========================================
+  # 2. Deploy Backend on Self-Hosted Runner
+  # ==========================================
+  deploy:
+    name: Deploy Backend
+    needs: build-and-push
+
+    runs-on: self-hosted
+
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+
+      - name: Check Docker
+        run: |
+          docker --version
+          docker compose version
+
+      - name: Pull latest Backend image
+        working-directory: /opt/myapp
+        run: |
+          docker compose pull backend
+
+      - name: Recreate Backend container
+        working-directory: /opt/myapp
+        run: |
+          docker compose up -d --force-recreate backend
+
+      - name: Check Backend container
+        working-directory: /opt/myapp
+        run: |
+          docker compose ps backend
+
+      - name: Test Backend
+        run: |
+          curl -f http://127.0.0.1:5000/
+
+      - name: Remove unused Docker images
+        run: |
+          docker image prune -f
