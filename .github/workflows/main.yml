@@ -26,9 +26,16 @@ jobs:
 
     steps:
 
+      # ----------------------------------------
+      # Checkout source code
+      # ----------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
+
+      # ----------------------------------------
+      # Login to GitHub Container Registry
+      # ----------------------------------------
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
@@ -36,19 +43,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+
+      # ----------------------------------------
+      # Build Docker image
+      # ----------------------------------------
       - name: Build Docker image
         run: |
           docker build \
             -t $IMAGE_NAME \
             .
 
+
+      # ----------------------------------------
+      # Push Docker image to GHCR
+      # ----------------------------------------
       - name: Push Docker image
         run: |
           docker push $IMAGE_NAME
 
 
   # ==========================================
-  # 2. Deploy Backend on Self-Hosted Runner
+  # 2. Deploy Backend to Self-Hosted Runner
   # ==========================================
   deploy:
     name: Deploy Backend
@@ -62,30 +77,25 @@ jobs:
 
     steps:
 
+      # ----------------------------------------
+      # Check Docker and Docker Compose
+      # ----------------------------------------
       - name: Check Docker
         run: |
           docker --version
           docker compose version
 
-      - name: Pull latest Backend image
+
+      # ----------------------------------------
+      # Go to deployment directory
+      # ----------------------------------------
+      - name: Check deployment directory
         working-directory: /opt/myapp
         run: |
-          docker compose pull backend
+          pwd
+          ls -la
 
-      - name: Recreate Backend container
-        working-directory: /opt/myapp
-        run: |
-          docker compose up -d --force-recreate backend
 
-      - name: Check Backend container
-        working-directory: /opt/myapp
-        run: |
-          docker compose ps backend
-
-      - name: Test Backend
-        run: |
-          curl -f http://127.0.0.1:5000/
-
-      - name: Remove unused Docker images
-        run: |
-          docker image prune -f
+      # ----------------------------------------
+      # Pull the latest Backend image
+      #
