@@ -10,13 +10,13 @@ app.use(express.json());
 
 // مسار رئيسي للتأكد من أن السيرفر شغال
 app.get('/', (req, res) => {
-  res.send('Backend API is running! 🚀عباس ');
+  res.send('Backend API is running! 🚀 ');
 });
 
 // مسار الـ API الذي سيطلبه الـ Frontend
 app.get('/api/data', (req, res) => {
   res.json({
-    message: "Hello from the Backend API!",
+    message: "Hello from the Backend API! عباس",
     timestamp: new Date().toISOString(),
     devops_fact: "Nginx is routing this request to the backend container."
   });
